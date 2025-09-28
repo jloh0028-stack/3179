@@ -1,26 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tutorial4</title>
+  <meta charset="UTF-8" />
+  <title>Townsville Bird Map</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <style>
+    html,body{margin:0;height:100%}
+    #vis{width:100%;height:100%}
+    .vega-actions{display:none}
+    .vega-bindings {
+  position: absolute;
+  bottom: 140px;       /* keep it near the bottom */
+  left: 30%;          /* push to horizontal center */
+  transform: translateX(-50%);  /* shift it back by half width to center it */
+  z-index: 10;        /* ensure it stays on top */
+}
+  </style>
 </head>
 <body>
-    <h1>Heading 1</h1>
-    <p>My First Paragraph</p>
-</body>
-<h1> Table of Student and Grade</h1>
-<table, border="1" cellpadding="10%">
-    <tr>
-        <th> First Name</th>
-        <th> Last Name</th>
-        <th> Grade</th>
-    </tr>
+<div id="vis"></div>
+<script>
+const spec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  /* === New title === */
+  title: {
+    text: "Map of Bird Population in Townsville (1975–2024)",
+    fontSize: 22,
+    font: "sans-serif",
+    anchor: "middle",
+    color: "#333"
+  },
+  width: 1100,
+  height: 700,
+  projection: {type: "mercator", center: [146.8, -19.25], scale: 35000},
+  /* === NEW: Year slider === */
+  params: [{
+    name: "year",
+    value: 2018,                                // default year
+    bind: { input: "range", min: 1975, max: 2024, step: 1 } 
+  }],
+  layer: [
+    // 1) Ocean
+    { data: { sphere: true }, mark: { type: "geoshape", fill: "#e7f2ff" } },
 
-    <tr>
-        <td>John</td>
-        <td>Doe</td>
-        <td>HD</td>
-    </tr>
-</table>
+    // 2) Land (Australia only)
+    {
+      data: { url: "Mapdata.json", format: { type: "topojson", feature: "ne_110m_admin_0_countries" } },
+      transform: [{ filter: "datum.properties.ADMIN === 'Australia'" }],
+      mark: { type: "geoshape", fill: "#f3f0e8", stroke: "#b9bec5", strokeWidth: 1 }
+    },
+    // 3) Geography regions (polys) — keep subtle and below marine layer
+    {
+      data: { url: "Mapdata.json", format: { type: "topojson", feature: "ne_110m_geography_regions_polys" } },
+      mark: {
+        type: "geoshape",
+        fill: "#a6e3a1",              
+        stroke: "#79c27a",
+        strokeWidth: 0.8,
+        opacity: 0.5                 
+      },
+      encoding: {
+        tooltip: [
+          { field: "name", title: "Region" },
+          { field: "featurecla", title: "Class" }
+        ]
+      }
+    },
+    // 4) Marine polygons (names of seas/ocean regions) — draw AFTER regions so the blue stays visible
+    {
+      data: { url: "Mapdata.json", format: { type: "topojson", feature: "ne_110m_geography_marine_polys" } },
+      mark: {
+        type: "geoshape",
+        fill: "#bfe3ff",              
+        stroke: "#9dc8ef",
+        strokeWidth: 0.5,
+        opacity: 0.30                 
+      },
+      encoding: {
+        tooltip: [
+          { field: "name", title: "Marine area" },
+          { field: "featurecla", title: "Class" }
+        ]
+      }
+    },
+    
+
+    // 5) Lakes
+    {
+      data: { url: "Mapdata.json", format: { type: "topojson", feature: "ne_110m_lakes" } },
+      mark: { type: "geoshape", fill: "#35a2b5", stroke: "#9cbbe6", strokeWidth: 1, opacity: 10 }
+    },
+
+
+    // 6) Rivers
+    {
+      data: { url: "Mapdata.json", format: { type: "topojson", feature: "ne_110m_rivers_lake_centerlines" } },
+      mark: { type: "geoshape", fill: "#35a2b5", stroke: "#35a2b5", strokeWidth: 10, opacity:2 }
+    },
+
+    // 7) Coastline
+    {
+      data: { url: "Mapdata.json", format: { type: "topojson", feature: "ne_110m_coastline" } },
+      mark: { type: "geoshape", fill:"#e3c06f", stroke: "#e3c06f", strokeWidth: 0.9, opacity: 0.30 }
+    },
+
+    // 8) Graticules
+    {
+      data: { url: "Mapdata.json", format: { type: "topojson", feature: "ne_110m_graticules_1" } },
+      mark: { type: "geoshape", stroke: "#96190b", strokeWidth: 0.30, opacity: 0.25 }
+    },
+
+    // 9) Bird points
+    {
+  data: { url: "birdata-townsville_WITH_ALL_COORDS.csv" },
+  transform: [
+    // convert to numeric lat/lon
+    { calculate: "toNumber(datum.lat)", as: "lat" },
+    { calculate: "toNumber(datum.lon)", as: "lon" },
+    { filter: "isValid(datum.lat) && isValid(datum.lon)" },
+
+    // >>> Extract year from Count_Date <<<
+    { calculate: "year(toDate(datum.Count_Date))", as: "Year" },
+
+    // >>> Filter by slider param <<<
+    { filter: "datum.Year == year" },
+
+    // aggregate bird counts per location
+    { aggregate: [{ op: "sum", field: "Count", as: "TotalCount" }],
+      groupby: ["lat","lon","Suburb", "Year"] }
+  ],
+  mark: { type: "circle", opacity: 1, stroke: "white", strokeWidth: 0.7 },
+  encoding: {
+    longitude: { field: "lon", type: "quantitative" },
+    latitude:  { field: "lat", type: "quantitative" },
+
+    // adjust size scale so points are easier to see
+    size:  { field: "TotalCount", type: "quantitative",
+             title: "Bird count", scale: { range: [50, 2000] } },
+
+    color: { field: "TotalCount", type: "quantitative",
+             title: "Bird count", scale: { scheme: "reds" } },
+
+    tooltip: [
+      { field: "Suburb", title: "Location" },
+      { field: "Year", title: "Year" },
+      { field: "TotalCount", title: "Total birds" },
+      { field: "lat", title: "Lat", format: ".5f" },
+      { field: "lon", title: "Lon", format: ".5f" }
+    ]
+  }
+}
+  ],
+  config: { view: { stroke: null } }
+};
+vegaEmbed("#vis", spec, { actions: false });
+</script>
+</body>
 </html>
