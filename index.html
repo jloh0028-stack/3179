@@ -4,24 +4,51 @@
   <meta charset="UTF-8" />
   <title>Townsville Bird Map</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- Vega libraries -->
   <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
   <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
   <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+
   <style>
-    html,body{margin:0;height:100%}
-    #vis{width:100%;height:100%}
-    .vega-actions{display:none}
-    .vega-bindings {
-  position: absolute;
-  bottom: 140px;       /* keep it near the bottom */
-  left: 30%;          /* push to horizontal center */
-  transform: translateX(-50%);  /* shift it back by half width to center it */
-  z-index: 10;        /* ensure it stays on top */
-}
+    html, body { margin: 0; }
+    /* Keep both visualisations nicely centered */
+    #vis, #timeline { max-width: 1100px; margin: 0 auto; }
+    .vega-actions { display: none; }
+
+    /* Wrap the MAP in a positioned container so the slider can be placed relative to it */
+    .viz { position: relative; padding-bottom: 56px; } /* space for the slider */
+
+    /* Center the year slider just under the map */
+    .vega-bindings{
+      position: absolute;
+      bottom: 16px;     /* distance below the map */
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: transparent;
+    }
+
+    /* Small header for the timeline */
+    .subhead{
+      max-width: 1100px;
+      margin: 18px auto 8px;
+      font: 600 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color:#344054;
+    }
   </style>
 </head>
 <body>
-<div id="vis"></div>
+
+  <!-- MAP (slider will attach inside this wrapper) -->
+  <div class="viz">
+    <div id="vis"></div>
+  </div>
+
+  <!-- TIMELINE -->
+  <h3 class="subhead">Total birds in Townsville from 2020 to 2024</h3>
+  <div id="timeline" style="max-width:1100px;margin:24px auto 60px;"></div>
+
 <script>
 const spec = {
   $schema: "https://vega.github.io/schema/vega-lite/v5.json",
@@ -157,6 +184,69 @@ const spec = {
   config: { view: { stroke: null } }
 };
 vegaEmbed("#vis", spec, { actions: false });
+/* === New TIMELINE chart code === */
+  const timelineSpec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+  data: { url: "aussie-backyard-bird-count-townsville.csv" },
+  title: {
+    text: "Total birds in Townsville from 2020 to 2024",
+    fontSize: 22,
+    font: "sans-serif",
+    anchor: "middle",
+    color: "#333"
+  },
+
+  transform: [
+    { calculate: "toNumber(datum.Year)", as: "YearNum" },
+    { calculate: "toNumber(datum['Bird Count'])", as: "CountNum" },
+    { filter: "isValid(datum.YearNum) && isValid(datum.CountNum)" },
+    { aggregate: [{ op: "sum", field: "CountNum", as: "TotalCount" }], groupby: ["YearNum"] }
+  ],
+
+  vconcat: [
+    {
+      width: 1100,         // explicit width avoids tiny charts
+      height: 300,
+      mark: "area",
+      encoding: {
+        x: {
+          field: "YearNum",
+          type: "quantitative",
+          scale: { domain: { param: "brush" } },
+          axis: { title: "Year", format: ".0f", tickMinStep: 1 }
+        },
+        y: {
+          field: "TotalCount",
+          type: "quantitative",
+          title: "Total Bird Count",
+          axis: { titlePadding: 10 }
+        },
+        tooltip: [
+          { field: "YearNum", type: "quantitative", title: "Year", format: ".0f" },
+          { field: "TotalCount", type: "quantitative", title: "Bird Count" }
+        ]
+      }
+    },
+    {
+      width: 1100,
+      height: 80,
+      mark: "area",
+      params: [{ name: "brush", select: { type: "interval", encodings: ["x"] } }],
+      encoding: {
+        // IMPORTANT: use YearNum here too
+        x: { field: "YearNum", type: "quantitative", axis: { title: "", format: ".0f", tickMinStep: 1 } },
+        y: { field: "TotalCount", type: "quantitative", axis: { title: "", grid: false } }
+      }
+    }
+  ],
+  config: {
+    axis: { labelFontSize: 14, titleFontSize: 14 },
+    view: { stroke: null }
+  }
+};
+
+vegaEmbed("#timeline", timelineSpec, { actions: false });
+
 </script>
 </body>
 </html>
