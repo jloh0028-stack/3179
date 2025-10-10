@@ -179,11 +179,48 @@ const spec = {
       { field: "lon", title: "Lon", format: ".5f" }
     ]
   }
-}
+},
+// 10) Top-2 labels for highest bird counts
+  {
+    data: { url: "birdata-townsville_WITH_ALL_COORDS.csv" },
+    transform: [
+      { calculate: "toNumber(datum.lat)", as: "lat" },
+      { calculate: "toNumber(datum.lon)", as: "lon" },
+      { filter: "isValid(datum.lat) && isValid(datum.lon)" },
+      { calculate: "year(toDate(datum.Count_Date))", as: "Year" },
+      { filter: "datum.Year == year" },
+      { aggregate: [{ op: "sum", field: "Count", as: "TotalCount" }],
+        groupby: ["lat","lon","Suburb","Year"] },
+      { window: [{ op: "rank", as: "r" }],
+        sort: [{ field: "TotalCount", order: "descending" }] },
+      { filter: "datum.r <= 2" },
+      { calculate: "datum.Suburb + ': ' + format(datum.TotalCount, ',')", as: "label" }
+    ],
+    mark: {
+      type: "text",
+    dy: -12,
+    fontSize: 14,
+    font: "sans-serif",
+    fontWeight: "bold",
+  // crisp, subtle halo:
+    fill: "#111",
+    stroke: "black",
+    strokeWidth: 1,     // was 3 — makes it look blurry
+    strokeJoin: "round"
+    },
+    encoding: {
+      longitude: { field: "lon", type: "quantitative" },
+      latitude:  { field: "lat", type: "quantitative" },
+      text:      { field: "label" }
+    }
+  }
   ],
   config: { view: { stroke: null } }
 };
-vegaEmbed("#vis", spec, { actions: false });
+vegaEmbed("#vis", spec, { 
+  actions: false,
+  renderer: "svg"   // ✅ this makes your labels crisp
+});
 /* === New TIMELINE chart code === */
   const timelineSpec = {
   $schema: "https://vega.github.io/schema/vega-lite/v5.json",
