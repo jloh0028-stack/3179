@@ -46,8 +46,13 @@
   </div>
 
   <!-- TIMELINE -->
-  <h3 class="subhead">Total birds in Townsville from 2020 to 2024</h3>
+  <h3 class="subhead">Total birds in Townsville from 1998 to 2005</h3>
   <div id="timeline" style="max-width:1100px;margin:24px auto 60px;"></div>
+
+  <!-- MELBOURNE: Total birds per year (area + brush) -->
+<h3 class="subhead">Total birds in Melbourne by year</h3>
+<div id="melbourne_timeline" style="max-width:1100px;margin:24px auto 60px;"></div>
+
 
 <script>
 const spec = {
@@ -62,13 +67,54 @@ const spec = {
   },
   width: 1100,
   height: 700,
-  projection: {type: "mercator", center: [146.8, -19.25], scale: 35000},
-  /* === NEW: Year slider === */
-  params: [{
-    name: "year",
-    value: 2018,                                // default year
-    bind: { input: "range", min: 1975, max: 2024, step: 1 } 
-  }],
+   /* === Controls: year, zoom, center === */
+  params: [
+    {
+      name: "year",
+      value: 2018,
+      bind: { input: "range", min: 1975, max: 2024, step: 1, name: "year" }
+    },
+    {
+      name: "zoom_level",
+      value: 35000,  /* roughly your previous scale */
+      bind: {
+        input: "range",
+        min: 9000,
+        max: 120000,
+        step: 500,
+        name: "zoom: "
+      }
+    },
+    {
+      name: "center_to",
+      value: [146.80, -19.25],  /* Townsville CBD-ish */
+      bind: {
+        input: "select",
+        options: [
+          [146.80, -19.25],  /* Townsville City */
+          [146.85, -19.13],  /* Magnetic Island */
+          [146.77, -19.33],  /* Ross River Dam */
+          [146.69, -19.24],  /* Bohle / Town Common */
+          [146.92, -19.27]   /* Cleveland Bay */
+        ],
+        labels: [
+          "Townsville City",
+          "Magnetic Island",
+          "Ross River Dam",
+          "Bohle / Town Common",
+          "Cleveland Bay"
+        ],
+        name: "centre: "
+      }
+    }
+  ],
+
+  /* === Projection responds to controls === */
+  projection: {
+    type: "mercator",
+    center: { expr: "center_to" },
+    scale:  { expr: "zoom_level" }
+  },
   layer: [
     // 1) Ocean
     { data: { sphere: true }, mark: { type: "geoshape", fill: "#e7f2ff" } },
@@ -159,7 +205,7 @@ const spec = {
     { aggregate: [{ op: "sum", field: "Count", as: "TotalCount" }],
       groupby: ["lat","lon","Suburb", "Year"] }
   ],
-  mark: { type: "circle", opacity: 1, stroke: "white", strokeWidth: 0.7 },
+  mark: { type: "circle", opacity: 3, stroke: "white", strokeWidth: 0.7 },
   encoding: {
     longitude: { field: "lon", type: "quantitative" },
     latitude:  { field: "lat", type: "quantitative" },
@@ -224,9 +270,9 @@ vegaEmbed("#vis", spec, {
 /* === New TIMELINE chart code === */
   const timelineSpec = {
   $schema: "https://vega.github.io/schema/vega-lite/v5.json",
-  data: { url: "aussie-backyard-bird-count-townsville.csv" },
+  data: { url: "birdata-townsville_WITH_ALL_COORDS.csv" },
   title: {
-    text: "Total birds in Townsville from 2020 to 2024",
+    text: "Total birds in Townsville from 1998 to 2005",
     fontSize: 22,
     font: "sans-serif",
     anchor: "middle",
@@ -234,23 +280,29 @@ vegaEmbed("#vis", spec, {
   },
 
   transform: [
-    { calculate: "toNumber(datum.Year)", as: "YearNum" },
-    { calculate: "toNumber(datum['Bird Count'])", as: "CountNum" },
+    // Extract year from Count_Date and convert Count to number
+    { calculate: "year(toDate(datum.Count_Date))", as: "YearNum" },
+    { calculate: "toNumber(datum.Count)", as: "CountNum" },
+
+    // keep valid rows and restrict to 1998–2005
     { filter: "isValid(datum.YearNum) && isValid(datum.CountNum)" },
+    { filter: "datum.YearNum >= 1998 && datum.YearNum <= 2005" },
+
+    // aggregate to yearly totals
     { aggregate: [{ op: "sum", field: "CountNum", as: "TotalCount" }], groupby: ["YearNum"] }
   ],
 
   vconcat: [
     {
-      width: 1100,         // explicit width avoids tiny charts
+      width: 1100,
       height: 300,
-      mark: "area",
+      mark: { type: "line", stroke: "#4C78A8", strokeWidth: 2, interpolate: "monotone", point: true },
       encoding: {
         x: {
           field: "YearNum",
           type: "quantitative",
           scale: { domain: { param: "brush" } },
-          axis: { title: "Year", format: ".0f", tickMinStep: 1 }
+          axis: { title: "Year", format: ".0f", tickMinStep: 1, tickCount: 5  }
         },
         y: {
           field: "TotalCount",
@@ -260,22 +312,22 @@ vegaEmbed("#vis", spec, {
         },
         tooltip: [
           { field: "YearNum", type: "quantitative", title: "Year", format: ".0f" },
-          { field: "TotalCount", type: "quantitative", title: "Bird Count" }
+          { field: "TotalCount", type: "quantitative", title: "Bird Count", format: "," }
         ]
       }
     },
     {
       width: 1100,
       height: 80,
-      mark: "area",
+      mark: { type: "line", stroke: "#4C78A8", strokeWidth: 2, interpolate: "monotone", point: true },
       params: [{ name: "brush", select: { type: "interval", encodings: ["x"] } }],
       encoding: {
-        // IMPORTANT: use YearNum here too
-        x: { field: "YearNum", type: "quantitative", axis: { title: "", format: ".0f", tickMinStep: 1 } },
-        y: { field: "TotalCount", type: "quantitative", axis: { title: "", grid: false } }
+        x: { field: "YearNum", type: "quantitative", axis: { title: "Year", format: ".0f", tickMinStep: 1 } },
+        y: { field: "TotalCount", type: "quantitative", axis: { title: "Total Bird Count", grid: false } }
       }
     }
   ],
+
   config: {
     axis: { labelFontSize: 14, titleFontSize: 14 },
     view: { stroke: null }
@@ -283,6 +335,70 @@ vegaEmbed("#vis", spec, {
 };
 
 vegaEmbed("#timeline", timelineSpec, { actions: false });
+const melbTimelineSpec = {
+  $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+
+  data: { url: "environment-bird-atlas-city-of-greater-geelong.csv" },
+
+  title: {
+    text: "Total birds in Melbourne from 1998 to 2005",
+    fontSize: 22,
+    font: "sans-serif",
+    anchor: "middle",
+    color: "#333"
+  },
+
+  
+
+  transform: [
+    { calculate: "split(datum.start_date, '/')", as: "dparts" },
+    { calculate: "toDate(datum.dparts[2] + '-' + datum.dparts[1] + '-' + datum.dparts[0])", as: "Date" },
+    { calculate: "year(datum.Date)", as: "Year" },
+    { calculate: "toNumber(datum.species_nu)", as: "CountNum" },
+    { filter: "isValid(datum.CountNum) && isValid(datum.Year)" },
+    
+    { aggregate: [{ op: "sum", field: "CountNum", as: "TotalCount" }], groupby: ["Year"] }
+  ],
+
+  vconcat: [
+    {
+      width: 1100,
+      height: 300,
+      mark: {
+      type: "area",
+      color: "#4CAF50"   // 🌿 green shade
+  },
+      encoding: {
+        x: { field: "Year", type: "quantitative", scale: { domain: { param: "brush" } },
+             axis: { title: "Year", format: ".0f", tickMinStep: 1 } ,tickCount: 5 },
+        y: { field: "TotalCount", type: "quantitative", title: "Total Bird Count",
+             axis: { titlePadding: 10 } },
+        tooltip: [
+          { field: "Year", type: "quantitative", title: "Year", format: ".0f" },
+          { field: "TotalCount", type: "quantitative", title: "Bird Count", format: "," }
+        ]
+      }
+    },
+    {
+      width: 1100,
+      height: 80,
+      mark: {
+      type: "area",
+      color: "#4CAF50"   // 🌿 green shade
+  },
+      params: [{ name: "brush", select: { type: "interval", encodings: ["x"] } }],
+      encoding: {
+        x: { field: "Year", type: "quantitative", axis: { title: "Year", format: ".0f", tickMinStep: 1 } },
+        y: { field: "TotalCount", type: "quantitative", axis: { title: "Total Bird Count", grid: false } }
+      }
+    }
+  ],
+
+  config: { axis: { labelFontSize: 14, titleFontSize: 14 }, view: { stroke: null } }
+};
+
+vegaEmbed("#melbourne_timeline", melbTimelineSpec, { actions: false });
+
 
 </script>
 </body>
