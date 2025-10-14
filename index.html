@@ -30,34 +30,304 @@
     }
 
     /* Small header for the timeline */
-    .subhead{
-      max-width: 1100px;
-      margin: 18px auto 8px;
-      font: 600 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      color:#344054;
-    }
+    /* layout for the map + sidebar */
+.hero {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  max-width: 1200px;
+  margin: 0 auto 12px;
+}
+.hero {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  max-width: 1400px;
+  margin: 0 auto 24px;
+  padding: 0 20px;
+}
+
+/* Left column (title & intro) */
+.intro {
+  flex: 1 1 300px;
+  padding-right: 16px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #1f2937;
+}
+
+.intro h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin-bottom: 12px;
+  color: #0f172a;
+}
+
+.intro p {
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+/* Map column */
+.viz--map {
+  flex: 2 1 800px;
+  min-width: 0;
+  position: relative;
+}
+
+#vis,
+#vis .vega-embed,
+#vis .vega-embed > *,
+#vis svg,
+#vis canvas {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Right column */
+.sidebar {
+  flex: 1 1 320px;
+  padding: 12px 0 0 16px;
+  border-left: 1px solid #e5e7eb;
+  font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #344054;
+}
+
+.sidebar h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: #111827;
+}
+
+/* Mobile view: stack vertically */
+@media (max-width: 960px) {
+  .hero {
+    flex-direction: column;
+  }
+  .intro {
+    padding-right: 0;
+  }
+  .sidebar {
+    border-left: none;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 12px;
+  }
+}
+
+
+/* the map column */
+.viz--map {
+  flex: 3 1 720px;   /* grows, shrinks, preferred basis */
+  min-width: 0;      /* <-- allows it to shrink instead of overflowing */
+  position: relative;/* keep slider positioning working */
+}
+
+/* the explanation column */
+.sidebar {
+  flex: 1 1 320px;
+  padding: 12px 4px 0 16px;
+  border-left: 1px solid #e5e7eb;
+  font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #344054;
+}
+
+/* make the embedded Vega chart obey the container width */
+#vis,
+#vis .vega-embed,
+#vis .vega-embed > * {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* also ensure the underlying svg/canvas scales to fit */
+#vis svg,
+#vis canvas {
+  width: 100% !important;
+  height: auto !important;
+}
+
+/* mobile: stack text below the map */
+@media (max-width: 960px) {
+  .hero { flex-direction: column; }
+  .sidebar {
+    border-left: none;
+    border-top: 1px solid #e5e7eb;
+    padding: 12px 0 0 0;
+  }
+}
+
+/* ===== Comparison section (charts + right-hand notes) ===== */
+.compare {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  max-width: 1100px;
+  margin: 24px auto 60px;
+  padding: 0 4px;
+}
+
+.compare-charts {
+  flex: 2 1 720px;   /* charts column */
+  min-width: 0;      /* prevent overflow */
+}
+
+.compare-notes {
+  flex: 1 1 320px;   /* text column */
+  border-left: 1px solid #e5e7eb;
+  padding: 6px 0 0 16px;
+  font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #374151;
+}
+
+.compare-notes h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #111827;
+}
+
+.compare-notes ul {
+  margin: 8px 0 12px 18px;
+}
+
+.compare-notes .note {
+  color: #6b7280;
+  font-size: 12px;
+}
+.compare-notes {
+  flex: 1 1 320px;
+  border-left: 1px solid #e5e7eb;
+  padding: 80px 0 0 16px;  /* ⬅️ Increased top padding */
+  font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #374151;
+}
+
+
+.subhead {           /* small headings above charts */
+  margin: 12px 0 6px;
+}
+
+/* Stack vertically on smaller screens */
+@media (max-width: 960px) {
+  .compare { flex-direction: column; }
+  .compare-notes {
+    border-left: none;
+    border-top: 1px solid #e5e7eb;
+    padding-left: 0;
+    padding-top: 12px;
+  }
+}
+
+
   </style>
 </head>
 <body>
 
-  <!-- MAP (slider will attach inside this wrapper) -->
-  <div class="viz">
+  <!-- MAP + SIDEBAR TEXT -->
+<div class="hero">
+  <!-- LEFT COLUMN: Title + project intro -->
+  <div class="intro">
+    <h1>Exploring Australian Bird Populations</h1>
+    <p>
+      This project visualises how bird populations have changed over time 
+      in <strong>Townsville</strong> and <strong>Geelong</strong>, Australia. 
+      By exploring different years, you can see how bird distribution shifts, 
+      reflecting environmental changes such as habitat loss, urban expansion, 
+      or climate variability.
+    </p>
+    <p>
+      These patterns provide valuable insights for conservation and 
+      understanding ecosystem health.
+    </p>
+  </div>
+
+  <!-- MIDDLE COLUMN: Map -->
+  <div class="viz viz--map">
     <div id="vis"></div>
   </div>
 
-  <!-- TIMELINE -->
-  <h3 class="subhead">Total birds in Townsville from 1998 to 2005</h3>
-  <div id="timeline" style="max-width:1100px;margin:24px auto 60px;"></div>
-
-  <!-- MELBOURNE: Total birds per year (area + brush) -->
-<h3 class="subhead">Total birds in Melbourne by year</h3>
-<div id="melbourne_timeline" style="max-width:1100px;margin:24px auto 60px;"></div>
-
-<h3 class="subhead">Bird counts per year (1998–2005)</h3>
-<div style="display:flex; gap:24px; max-width:1100px; margin:0 auto;">
-  <div id="bubble_townsville" style="flex:1; min-height:420px;"></div>
-  <div id="bubble_geelong"   style="flex:1; min-height:420px;"></div>
+  <!-- RIGHT COLUMN: Instructions -->
+  <aside class="sidebar">
+    <h3>What you’re seeing</h3>
+    <p>
+      This interactive bubble map shows the distribution of bird populations 
+      in Townsville. Each circle represents a location where birds were observed, 
+      with larger and darker circles indicating higher counts.
+    </p>
+    <p>
+      Use the <strong>year slider</strong> below the map to see how bird 
+      populations shift over time. These changes may reflect factors like 
+      rainfall patterns, habitat change, or urban development.
+    </p>
+    <ul>
+      <li><strong>Circle size</strong>: Total birds at that location</li>
+      <li><strong>Colour</strong>: Darker = more birds</li>
+      <li>Watch clusters grow, shrink, or move through the years</li>
+    </ul>
+    <p style="font-size: 12px; color: #667085;">
+      *Counts are based on survey submissions and may vary by year and location.
+    </p>
+  </aside>
 </div>
+
+
+ <!-- ===== Comparison block ===== -->
+<div class="compare">
+  <div class="compare-charts">
+    <h3 class="subhead"></h3>
+    <div id="timeline"></div>
+
+    <h3 class="subhead"></h3>
+    <div id="melbourne_timeline"></div>
+  </div>
+
+  <aside class="compare-notes">
+    <h3>Townsville vs Geelong (1998–2005)</h3>
+    <p>
+      Both regions show a <strong>clear decline</strong> in overall bird counts across the period.
+      Townsville <strong>peaks in 2000</strong>, then trends downward, while Geelong
+      <strong>peaks in 2001</strong> before also declining.
+    </p>
+    <ul>
+      <li><strong>Townsville peak:</strong> 2000 (highest annual count on the chart)</li>
+      <li><strong>Geelong peak:</strong> 2001 (highest annual count on the chart)</li>
+      <li><strong>Overall trend:</strong> Downward in both locations from the early-2000s</li>
+    </ul>
+    <p>
+      These patterns may reflect <strong>environmental change</strong>—e.g., climate variability,
+      habitat change, rainfall shifts, or urban development.
+    </p>
+    <p class="note">*Counts are based on survey submissions and may vary by year and location.</p>
+  </aside>
+</div>
+
+
+
+<h3 class="subhead">Bubble plots for Bird population per year (1998–2005)</h3>
+<div class="bubble-section">
+  <div class="bubble-charts">
+    <div id="bubble_townsville" class="bubble-chart"></div>
+    <div id="bubble_geelong" class="bubble-chart"></div>
+  </div>
+
+  <aside class="bubble-notes">
+    <h3>Bubble plots — Species selection</h3>
+    <p>
+      These bubble plots show <strong>total bird counts</strong> for 
+      <strong>Townsville</strong> and <strong>Geelong</strong> across 1998–2005.
+      Use the <strong>Species dropdown</strong> to filter for specific bird species.
+    </p>
+    <ul>
+      <li>Larger bubbles = higher bird counts</li>
+      <li>Allows direct comparison across species and years</li>
+      <li>Helps identify trends in species population over time</li>
+    </ul>
+    <p class="note">
+      * Some species may not appear on the graph due to <strong>missing or incomplete survey data</strong> for certain years or locations.
+    </p>
+  </aside>
+</div>
+
 
 
 
@@ -67,12 +337,12 @@ const spec = {
   /* === New title === */
   title: {
     text: "Map of Bird Population in Townsville (1975–2024)",
-    fontSize: 22,
+    fontSize: 20,
     font: "sans-serif",
     anchor: "middle",
     color: "#333"
   },
-  width: 1100,
+  width: "container",
   height: 700,
    /* === Controls: year, zoom, center === */
   params: [
@@ -280,7 +550,7 @@ vegaEmbed("#vis", spec, {
   data: { url: "birdata-townsville_WITH_ALL_COORDS.csv" },
   title: {
     text: "Total birds in Townsville from 1998 to 2005",
-    fontSize: 22, font: "sans-serif", anchor: "middle", color: "#333"
+    fontSize: 20, font: "sans-serif", anchor: "middle", color: "#333"
   },
 
   transform: [
@@ -296,7 +566,7 @@ vegaEmbed("#vis", spec, {
 
   vconcat: [
     {
-      width: 1100,
+      width: 600,
       height: 300,
       layer: [
         // Main line – bind x-scale to brush
@@ -361,7 +631,7 @@ vegaEmbed("#vis", spec, {
 
     // Brush chart (defines the "brush" param)
     {
-      width: 1100,
+      width: 600,
       height: 80,
       mark: { type: "line", interpolate: "monotone", strokeWidth: 2, opacity: 0.6 },
       params: [{ name: "brush", select: { type: "interval", encodings: ["x"] } }],
@@ -382,8 +652,8 @@ const melbTimelineSpec = {
   data: { url: "environment-bird-atlas-city-of-greater-geelong.csv" },
 
   title: {
-    text: "Total birds in Melbourne from 1998 to 2005",
-    fontSize: 22,
+    text: "Total birds in Geelong from 1998 to 2005",
+    fontSize: 20,
     font: "sans-serif",
     anchor: "middle",
     color: "#333"
@@ -403,7 +673,7 @@ const melbTimelineSpec = {
 
   vconcat: [
     {
-      width: 1100,
+      width: 600,
       height: 300,
       mark: {
       type: "area",
@@ -421,7 +691,7 @@ const melbTimelineSpec = {
       }
     },
     {
-      width: 1100,
+      width: 600,
       height: 80,
       mark: {
       type: "area",
