@@ -11,7 +11,9 @@
   <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
 
   <style>
-    html, body { margin: 0; }
+    html, body { background-color: #f7f2e8;  /* Beige */
+  margin: 0;
+  padding: 0; }
     /* Keep both visualisations nicely centered */
     #vis, #timeline { max-width: 1100px; margin: 0 auto; }
     .vega-actions { display: none; }
@@ -161,7 +163,7 @@
 .compare {
   display: flex;
   gap: 24px;
-  align-items: flex-start;
+  align-items: center;
   max-width: 1100px;
   margin: 24px auto 60px;
   padding: 0 4px;
@@ -204,6 +206,7 @@
 
 
 .subhead {           /* small headings above charts */
+  font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   margin: 12px 0 6px;
 }
 
@@ -217,11 +220,105 @@
     padding-top: 12px;
   }
 }
+/* ===== Bubble plots section (Townsville & Geelong) ===== */
+.bubble-section {
+  display: flex;
+  flex-direction: column;   /* stack content vertically */
+  gap: 24px;
+  align-items: center;      /* centers the block below */
+}
 
+.bubble-charts {
+  display: flex;
+  gap: 24px;
+  justify-content: center;  /* center the plots */
+  flex-wrap: wrap;          /* makes it responsive on smaller screens */
+}
+
+.bubble-chart {
+  flex: 1 1 500px;          /* each plot takes equal space */
+  max-width: 500px;
+}
+
+.bubble-notes {
+  max-width: 800px;
+  margin-top: 12px;
+  text-align: left;
+  font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #374151;
+}
+
+.bubble-notes h3 {
+  margin-top: 0;
+  font-size: 18px;
+  color: #111827;
+}
+
+.bubble-notes ul {
+  margin: 8px 0 12px 18px;
+}
+
+.bubble-notes .note {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+@media (max-width: 960px) {
+  .bubble-charts {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+.subhead {
+  text-align: center;
+  max-width: 1100px;   /* same as your bubble container */
+  margin: 12px auto 12px;
+  font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+/* ===== Beige background for charts ===== */
+.vega-embed, 
+.vega-embed > div, 
+.vega-embed svg,
+.vega-embed canvas {
+  background-color: #f7f2e8 !important;  /* same beige as page */
+}
+
+.vega-embed {
+  padding: 10px;
+  border: 1px solid #e0d8b0;    /* soft border to match */
+  border-radius: 6px;
+}
+
+:root { --beige: #f7f2e8; }
+
+/* Pigeon pattern on the BODY only */
+.has-pigeon-pattern {
+  background-color: var(--beige);
+  /* soften the pattern a bit so it doesn’t compete with content */
+  background-image:
+    linear-gradient(rgba(247,242,232,.85), rgba(247,242,232,.85)),
+    url("pigeon-bird-and-leafs-seamless-pattern-vector-29339946.jpg");
+  background-repeat: repeat;
+  background-size: 380px;         /* adjust scale */
+  background-attachment: fixed;   /* nice, subtle parallax */
+}
+
+/* Solid content panel that hides the pattern underneath */
+.page-shell {
+  max-width: 1200px;              /* match your layout width */
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+  background: var(--beige);       /* hides pattern under content */
+  border-radius: 12px;            /* optional nicety */
+  box-shadow: 0 6px 18px rgba(0,0,0,.06); /* optional */
+}
 
   </style>
 </head>
-<body>
+<body class="has-pigeon-pattern">
+  <div class="page-shell">
 
   <!-- MAP + SIDEBAR TEXT -->
 <div class="hero">
@@ -258,6 +355,11 @@
       Use the <strong>year slider</strong> below the map to see how bird 
       populations shift over time. These changes may reflect factors like 
       rainfall patterns, habitat change, or urban development.
+    </p>
+    </p>
+      Use the <strong>zoom slider</strong> below the map to zoom out or zoom in on locations 
+      on the map. 
+
     </p>
     <ul>
       <li><strong>Circle size</strong>: Total birds at that location</li>
@@ -303,29 +405,32 @@
 
 
 
-<h3 class="subhead">Bubble plots for Bird population per year (1998–2005)</h3>
-<div class="bubble-section">
-  <div class="bubble-charts">
-    <div id="bubble_townsville" class="bubble-chart"></div>
-    <div id="bubble_geelong" class="bubble-chart"></div>
-  </div>
+<div class="bubble-container">
+  <h3 class="subhead">Bubble plots for Bird population per year (1998–2005)</h3>
+  <div class="bubble-section">
+    <div class="bubble-charts">
+      <div id="bubble_townsville" class="bubble-chart"></div>
+      <div id="bubble_geelong" class="bubble-chart"></div>
+    </div>
 
-  <aside class="bubble-notes">
-    <h3>Bubble plots — Species selection</h3>
-    <p>
-      These bubble plots show <strong>total bird counts</strong> for 
-      <strong>Townsville</strong> and <strong>Geelong</strong> across 1998–2005.
-      Use the <strong>Species dropdown</strong> to filter for specific bird species.
-    </p>
-    <ul>
-      <li>Larger bubbles = higher bird counts</li>
-      <li>Allows direct comparison across species and years</li>
-      <li>Helps identify trends in species population over time</li>
-    </ul>
-    <p class="note">
-      * Some species may not appear on the graph due to <strong>missing or incomplete survey data</strong> for certain years or locations.
-    </p>
-  </aside>
+    <aside class="bubble-notes">
+      <h3>Bubble plots — Species selection</h3>
+      <p>
+        These bubble plots show <strong>total bird counts</strong> for 
+        <strong>Townsville</strong> and <strong>Geelong</strong> across 1998–2005.
+        Use the <strong>Species dropdown</strong> to filter for specific bird species.
+      </p>
+      <ul>
+        <li>Larger bubbles = higher bird counts</li>
+        <li>Allows direct comparison across species and years</li>
+        <li>Helps identify trends in species population over time</li>
+      </ul>
+      <p class="note">
+        * Some species may not appear on the graph due to 
+        <strong>missing or incomplete survey data</strong> for certain years or locations.
+      </p>
+    </aside>
+  </div>
 </div>
 
 
@@ -714,7 +819,7 @@ vegaEmbed("#melbourne_timeline", melbTimelineSpec, { actions: false });
 const bubbleTownsville = {
   $schema: "https://vega.github.io/schema/vega-lite/v5.json",
   title: "Townsville — bubble plot (1998–2005)",
-  width: 500, height: 380,
+  width: "container", height: 380,
   params: [{
     name: "species_tsv",
     value: "All species",
@@ -758,7 +863,43 @@ const bubbleTownsville = {
         size: { field: "TotalCount", type: "quantitative", scale: { range: [30, 700] } },
         tooltip: [{ field: "Year", title: "Year" }, { field: "TotalCount", title: "Birds", format: "," }]
       }
-    }
+    },
+      {
+  // show note only for these two species
+  transform: [
+    { filter: "species_tsv == 'Crested Pigeon' || species_tsv == 'Australian Wood Duck'" }
+  ],
+  data: { values: [ {} ] },          
+  mark: {
+    type: "text",
+    align: "center",
+    baseline: "middle",
+    fontSize: 11,
+    fill: "#555"
+  },
+  encoding: {
+    x: { value: 250 },
+    y: { value: 190 },
+    text: { value: "This species may not appear on the graph due to missing or incomplete survey data." }
+  }
+},
+      {
+  transform: [
+    { filter: "species_tsv == 'Crested Pigeon' || species_tsv == 'Australian Wood Duck'" }
+  ],
+  mark: {
+    type: "text",
+    align: "center",
+    baseline: "middle",
+    fontSize: 13,
+    fill: "#555"
+  },
+  encoding: {
+    x: { expr: "width/2" },
+    y: { expr: "height/2" },
+    text: { value: "This species may not appear on the graph due to missing or incomplete survey data." }
+  }
+}
   ],
   config: { axis: { labelFontSize: 12, titleFontSize: 13 }, view: { stroke: null } }
 };
@@ -769,7 +910,7 @@ vegaEmbed("#bubble_townsville", bubbleTownsville, { actions: false, renderer: "s
 const bubbleGeelong = {
   $schema: "https://vega.github.io/schema/vega-lite/v5.json",
   title: "Geelong — bubble plot (1998–2005)",
-  width: 500, height: 380,
+  width: "container", height: 380,
   params: [{
     name: "species_glg",
     value: "All species",
